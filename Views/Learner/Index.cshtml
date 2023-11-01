@@ -8,33 +8,74 @@
 @model IEnumerable<Learner>
 <div class="ms-2 mx-2">
     <h1>Learner List</h1>
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th>Mã</th>
-                <th>Tên</th>
-                <th>Họ</th>
-                <th>Ngành</th>
-                <th>Ngày nhập học</th>
-                <th>Chức năng</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var s in Model)
-            {
+    @await Component.InvokeAsync("Major")
+    <div id="content">
+        <table class="table table-striped">
+            <thead>
                 <tr>
-                    <td>@s.LearnerID</td>
-                    <td>@s.FirstMidName</td>
-                    <td>@s.LastName</td>
-                    <td>@s.Major.MajorName</td>
-                    <td>@s.EnrollmentDate</td>
-                    <td>
-                        <a asp-action="Edit" asp-route-id="@s.LearnerID">Edit</a>|
-                        <a asp-action="Delete" asp-route-id="@s.LearnerID">Delete</a>
-                    </td>
+                    <th>Mã</th>
+                    <th>Tên</th>
+                    <th>Họ</th>
+                    <th>Ngành</th>
+                    <th>Ngày nhập học</th>
+                    <th>Chức năng</th>
                 </tr>
-            }
-        </tbody>
-    </table>
+            </thead>
+            <tbody>
+                @foreach (var s in Model)
+                {
+                    <tr>
+                        <td>@s.LearnerID</td>
+                        <td>@s.FirstMidName</td>
+                        <td>@s.LastName</td>
+                        <td>@s.Major.MajorName</td>
+                        <td>@s.EnrollmentDate</td>
+                        <td>
+                            <a asp-action="Edit" asp-route-id="@s.LearnerID">Edit</a>|
+                            <a asp-action="Delete" asp-route-id="@s.LearnerID">Delete</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
     <a asp-action="Create" class="btn btn-primary">Create New Student</a>
+    @if (ViewBag.pageNumber > 1)
+    {
+        <nav aria-label="...">
+            <ul class="pagination">
+                @for (int i = 1; i <= ViewBag.pageNumber; i++)
+                {
+                    <li class="page-item" id="@i"><a class="page-link">@i</a></li>
+                }
+            </ul>
+        </nav>
+    }
 </div>
+@section Scripts{
+    <script>
+        $(".filter").click(function (e) {
+            var id = $(this).attr("id");
+            $.ajax({
+                url: "Learner/LearnerByMajorID",
+                data: { mid: id },
+                success: function (response) {
+                    $("div#content").html(response);
+                }
+            });
+        });
+
+        $(".page-item").click(function (e) {
+            var id = $(this).attr("id");
+            console.log(id);
+
+            $.ajax({
+                url: "Learner/LearnerByPage",
+                data: { page: id },
+                success: function (response) {
+                    $("div#content").html(response);
+                }
+            });
+        });
+    </script>
+}

@@ -10,13 +10,35 @@ namespace Lab4.Controllers
     public class LearnerController : Controller
     {
         private SchoolContext db;
+        private static int pageSize = 2;
         public LearnerController(SchoolContext context) {
             db = context;
         }
-        public IActionResult Index()
+        public IActionResult Index(int? mid,int? page)
         {
-            var learners= db.Learners.Include(m=>m.Major).ToList();
-            return View(learners);
+            if (page == null)
+            {
+                page = 1;
+            }
+            if(mid == null)
+            {
+                var learners = db.Learners.Include(m => m.Major).ToList();
+                ViewBag.pageNumber = (learners.Count()%pageSize==0?learners.Count()/pageSize:learners.Count/pageSize+1);
+                learners = db.Learners.Include(m => m.Major).ToList().GetRange(0,pageSize);
+                return View(learners);
+               /* }
+                else
+                {
+                    var learners = db.Learners.Include(m => m.Major).ToList().GetRange((page - 1) * 2 + 1, (page - 1) * 2 + 2);
+                    ViewBag.pageNumber = (int)(learners.Count() / 2);
+                    return PartialView("LearnerTable", learners);
+                } */  
+            }
+            else
+            {
+                var learners = db.Learners.Where(l=>l.MajorID==mid).Include(m => m.Major).ToList().GetRange(0,pageSize);
+                return View(learners);
+            }
         }
 
         public IActionResult Create()
@@ -130,5 +152,29 @@ namespace Lab4.Controllers
             return RedirectToAction(nameof(Index));
         }
 
+
+        public IActionResult LearnerByMajorID(int mid)
+        {
+            var learnersTem=db.Learners.Where(l=>l.MajorID==mid).Include(m=>m.Major).ToList();
+            var learners = (learnersTem.Count > pageSize ? learnersTem.GetRange(0, pageSize) : learnersTem.GetRange(0, learnersTem.Count));
+            return PartialView("LearnerTable", learners);
+        }
+
+
+        public IActionResult LearnerByPage(int page)
+        {
+            var learners = db.Learners.Include(m => m.Major).ToList();
+            int count = learners.Count();
+            if(count%pageSize!=0 && page == count / pageSize+1)
+            {
+                learners = db.Learners.Include(m => m.Major).ToList().GetRange((page - 1) * pageSize, count%pageSize);
+            }
+            else
+            {
+                learners = db.Learners.Include(m => m.Major).ToList().GetRange((page - 1) * pageSize, pageSize);
+            }
+
+            return PartialView("LearnerTable", learners);
+        }
     }
 }
