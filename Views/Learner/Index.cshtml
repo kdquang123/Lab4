@@ -9,6 +9,13 @@
 <div class="ms-2 mx-2">
     <h1>Learner List</h1>
     @await Component.InvokeAsync("Major")
+    <form class="d-none d-md-inline-block form-inline ms-auto me-0 me-md-3 my-2 my-md-0">
+        <div class="input-group">
+            <input id="keyword" class="form-control" name="keyword"
+                type="text" placeholder="Search leaner"/>
+            <button id="btnSearch" class="btn btn-primary" type="button"><i class="fas fa-search"></i></button>
+        </div>
+    </form>
     <div id="content">
         <table class="table table-striped">
             <thead>
@@ -38,26 +45,43 @@
                 }
             </tbody>
         </table>
+        <a asp-action="Create" class="btn btn-primary">Create New Student</a>
+        @if (ViewBag.pageNumber > 1)
+        {
+            <nav aria-label="...">
+                <ul class="pagination">
+                    @for (int i = 1; i <= ViewBag.pageNumber; i++)
+                    {
+                        <li class="page-item" page="@i"
+                        @(ViewBag.mid != null ? "mid="+ViewBag.mid: "")
+                        @(ViewBag.keyword != null ? "keyword="+ViewBag.keyword : "")>
+                            <a class="page-link">@i</a>
+                        </li>
+                    }
+                </ul>
+            </nav>
+        }
     </div>
-    <a asp-action="Create" class="btn btn-primary">Create New Student</a>
-    @if (ViewBag.pageNumber > 1)
-    {
-        <nav aria-label="...">
-            <ul class="pagination">
-                @for (int i = 1; i <= ViewBag.pageNumber; i++)
-                {
-                    <li class="page-item" id="@i"><a class="page-link">@i</a></li>
-                }
-            </ul>
-        </nav>
-    }
 </div>
 @section Scripts{
     <script>
+        $('body').on('click', 'li.page-item', function () {
+            var page = $(this).attr("page");
+            var mid = $(this).attr("mid");
+            var keyword = $(this).attr("keyword");
+            var data = { mid: mid, keyword: keyword, pageIndex: page };
+            $.ajax({
+                url:"Learner/LearnerFilter",
+                data:data,
+                success: function (response) {
+                    $("div#content").html(response);
+                }
+            })
+        })
         $(".filter").click(function (e) {
             var id = $(this).attr("id");
             $.ajax({
-                url: "Learner/LearnerByMajorID",
+                url: "Learner/LearnerFilter",
                 data: { mid: id },
                 success: function (response) {
                     $("div#content").html(response);
@@ -65,13 +89,12 @@
             });
         });
 
-        $(".page-item").click(function (e) {
-            var id = $(this).attr("id");
-            console.log(id);
-
+        $("button#btnSearch").click(function (e) {
+            var keyword = $("#keyword").val();
+            var data={ keyword: keyword };
             $.ajax({
-                url: "Learner/LearnerByPage",
-                data: { page: id },
+                url: "Learner/LearnerFilter",
+                data: data,
                 success: function (response) {
                     $("div#content").html(response);
                 }

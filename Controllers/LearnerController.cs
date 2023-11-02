@@ -153,10 +153,17 @@ namespace Lab4.Controllers
         }
 
 
-        public IActionResult LearnerByMajorID(int mid)
+/*        public IActionResult LearnerByMajorID(int mid,int ?page)
         {
-            var learnersTem=db.Learners.Where(l=>l.MajorID==mid).Include(m=>m.Major).ToList();
-            var learners = (learnersTem.Count > pageSize ? learnersTem.GetRange(0, pageSize) : learnersTem.GetRange(0, learnersTem.Count));
+            List<Learner> learnersTem=new List<Learner>();
+            List<Learner> learners= new List<Learner>();
+            if (page == null)
+            {
+                learnersTem = db.Learners.Where(l => l.MajorID == mid).Include(m => m.Major).ToList();
+                learners = (learnersTem.Count > pageSize ? learnersTem.GetRange(0, pageSize) : learnersTem.GetRange(0, learnersTem.Count));
+                ViewBag.pageNumber = (learnersTem.Count() % pageSize == 0 ? learnersTem.Count() / pageSize : learnersTem.Count / pageSize + 1);
+            }
+            ViewBag.isFilter = true;
             return PartialView("LearnerTable", learners);
         }
 
@@ -165,7 +172,9 @@ namespace Lab4.Controllers
         {
             var learners = db.Learners.Include(m => m.Major).ToList();
             int count = learners.Count();
-            if(count%pageSize!=0 && page == count / pageSize+1)
+            ViewBag.pageNumber = (learners.Count() % pageSize == 0 ? learners.Count() / pageSize : learners.Count / pageSize + 1);
+            ViewBag.isPaging = true;
+            if (count%pageSize!=0 && page == count / pageSize+1)
             {
                 learners = db.Learners.Include(m => m.Major).ToList().GetRange((page - 1) * pageSize, count%pageSize);
             }
@@ -173,8 +182,28 @@ namespace Lab4.Controllers
             {
                 learners = db.Learners.Include(m => m.Major).ToList().GetRange((page - 1) * pageSize, pageSize);
             }
-
             return PartialView("LearnerTable", learners);
+        }
+*/
+
+        public IActionResult LearnerFilter(int ?mid,string ?keyword,int ? pageIndex)
+        {
+            var learners = (IQueryable<Learner>)db.Learners;
+            int page = (int)(pageIndex == null || pageIndex <= 0 ? 1 : pageIndex);
+            if (mid != null)
+            {
+                learners = learners.Where(l => l.MajorID == mid);
+                ViewBag.mid = mid;
+            }
+            if (keyword!= null)
+            {
+                learners = learners.Where(l => l.FirstMidName.ToLower().Contains(keyword));
+                ViewBag.keyword = keyword;
+            }
+            int pageNumber = (int)Math.Ceiling(learners.Count() / (float)pageSize);
+            ViewBag.pageNumber = pageNumber;
+            var result=learners.Skip(pageSize*(page-1)).Take(pageSize).Include(m=>m.Major).ToList();
+            return PartialView("LearnerTable", result);
         }
     }
 }
